@@ -17,7 +17,7 @@ export default function CreateDeck({deckInfo}) {
   ];
 
   const handleChange = ({target}) => {
-    console.log(target.name, target.value);
+    // console.log(target.name, target.value);
     setFormData(prev => ({...prev, [target.name]: target.value}))
   }
 

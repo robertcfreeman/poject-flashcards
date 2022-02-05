@@ -9,7 +9,7 @@ export default function Study({deckInfo}) {
   const [cardCount, setCardCount] = useState(0);
 
   const {name, cards = [], id} = deckInfo;
-  console.log(name, cards);
+  
 
   //for Breadcrumbs use
   const directories = [

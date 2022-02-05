@@ -1,16 +1,41 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useHistory } from "react-router-dom";
 import Breadcrumbs from '../decks/Breadcrumbs';
-import { updateCard } from "../utils/api";
+import Form from "../Layout/Form";
+import { updateCard, readDeck } from "../utils/api";
 
-export default function CardEdit({deckInfo}) {
-  const {cardId} = useParams();
+export default function CardEdit() {
+  const {cardId, deckId} = useParams();
   const history = useHistory();
+  const [formData, setFormData] = useState({front: "", back: ""})
+  const [deckInfo, setDeckInfo] = useState({});
   
-  const initialFormData = {front: "", back: ""}
-  const [formData, setFormData] = useState({...initialFormData})
+  
 
+  //inject readDeck function and dependencies
 
+  const readCurrentDeck = useCallback(() => {
+    const abortController = new AbortController();
+   
+    readDeck(deckId)
+    .then(response => {
+      setDeckInfo(response);
+    })
+    .catch(error => {
+      alert("Something went wrong. Please try again.", error);
+    });
+
+    return () => abortController.abort();
+  }, [deckId, setDeckInfo]);
+
+  useEffect(() => {
+    const abortController = new AbortController();
+    readCurrentDeck();
+    return () => abortController.abort();
+
+  }, [readCurrentDeck]);
+
+  
   const {name, id, cards = []} = deckInfo
   //for Breadcrumbs use
   const directories = [
@@ -19,9 +44,17 @@ export default function CardEdit({deckInfo}) {
   ];
   
   //finds card object 
-  const cardInfo = cards.find(({id})=> id === parseInt(cardId));
+  const cardInfo = cards.find( card => card.id === parseInt(cardId));
 
-  const handleOnChange = ({target}) => {
+  useEffect(() => {
+    setFormData({
+      front: cardInfo?.front,
+      back: cardInfo?.back
+    })
+  }, [cardInfo, setFormData])
+
+
+  const handleChange = ({target}) => {
     setFormData({
       ...formData,
       [target.name]: target.value
@@ -30,7 +63,7 @@ export default function CardEdit({deckInfo}) {
 
   const deckScreenURL = `/decks/${id}`;
 
-  const handleSubmit = event => {
+  const handleSubmitClick = event => {
     event.preventDefault();
     updateCard(parseInt(cardId), formData)
     .then(response => console.log("card updated to:", response))
@@ -40,43 +73,14 @@ export default function CardEdit({deckInfo}) {
   return (
     <>
       <Breadcrumbs directories={directories}/>
-      <div className="container d-flex flex-column align-items-">
-        <h2>Edit Card</h2>
-        <form onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label htmlFor="front">Front</label>
-            <textarea 
-              rows="3"
-              className="form-control" 
-              id="front"
-              placeholder={cardInfo?.front}
-              onChange={handleOnChange}
-              value={formData.front}
-            >
-            </textarea>
-          </div>
-          <div className="form-group">
-            <label htmlFor="back">Back</label>
-            <textarea 
-              rows="3"
-              className="form-control" 
-              id="back"
-              placeholder={cardInfo?.back}
-              onChange={handleOnChange}
-              value={formData.back}
-            >
-            </textarea>
-          </div>
-          <button 
-            type="button"
-            onClick={() => history.push(deckScreenURL)} 
-            className="btn btn-secondary p-2 mr-3"
-          >
-            Cancel
-          </button>
-          <button type="submit" className="btn btn-primary p-2">Save</button>
-        </form>
-      </div>
+      <Form
+        handleSubmit={handleSubmitClick}
+        handleChange={handleChange}
+        deckId={id}
+        firstValue={formData.front}
+        secondValue={formData.back}
+        title={"Edit Card"}
+      />
     </>
   )
 }

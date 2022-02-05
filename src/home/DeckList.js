@@ -12,10 +12,7 @@ export default function DeckList({deckAndCards, setDeckAndCards}) {
     const abortController = new AbortController();
     try {
       listDecks(abortController.signal)
-      .then(response => {
-        console.log("deckList", response);
-        setDeckAndCards(response);
-      });
+      .then(response => setDeckAndCards(response));
     } catch (error) {
       if (error.name === "AbortError") {
         console.log("Aborted");
